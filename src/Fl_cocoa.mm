@@ -925,20 +925,39 @@ static void cocoaMouseWheelHandler(NSEvent *theEvent)
   fl_lock_function();
   Fl_Window *window = (Fl_Window*)[(FLWindow*)[theEvent window] getFl_Window];
   Fl::first_window(window);
-  // Under OSX, mousewheel deltas are floats, but fltk only supports ints.
-  float s = Fl::screen_driver()->scale(0);
-  int dx = roundf([theEvent deltaX] / s);
-  int dy = roundf([theEvent deltaY] / s);
-  // allow both horizontal and vertical movements to be processed by the widget
-  if (dx) {
-    Fl::e_dx = -dx;
-    Fl::e_dy = 0;
-    Fl::handle( FL_MOUSEWHEEL, window );
+
+  NSEventSubtype subtype = [theEvent subtype];
+  if ( subtype == NSEventSubtypeMouseEvent ){
+    // Under OSX, mousewheel deltas are floats, but fltk only supports ints.
+    float s = Fl::screen_driver()->scale(0);
+    int dx = roundf([theEvent deltaX] / s);
+    int dy = roundf([theEvent deltaY] / s);
+    // allow both horizontal and vertical movements to be processed by the widget
+    if (dx) {
+      Fl::e_dx = -dx;
+      Fl::e_dy = 0;
+      Fl::handle( FL_MOUSEWHEEL, window );
+    }
+    if (dy) {
+      Fl::e_dx = 0;
+      Fl::e_dy = -dy;
+      Fl::handle( FL_MOUSEWHEEL, window );
+    }
   }
-  if (dy) {
-    Fl::e_dx = 0;
-    Fl::e_dy = -dy;
-    Fl::handle( FL_MOUSEWHEEL, window );
+  else {
+    int dx = roundf([theEvent scrollingDeltaX]);
+    int dy = roundf([theEvent scrollingDeltaY]);
+    // allow both horizontal and vertical movements to be processed by the widget
+    if (dx) {
+      Fl::e_dx = -dx;
+      Fl::e_dy = 0;
+      Fl::handle( FL_SCROLL_GESTURE, window );
+    }
+    if (dy) {
+      Fl::e_dx = 0;
+      Fl::e_dy = -dy;
+      Fl::handle( FL_SCROLL_GESTURE, window );
+    }
   }
   fl_unlock_function();
 }

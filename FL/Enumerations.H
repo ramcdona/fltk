@@ -413,7 +413,14 @@ enum Fl_Event { // events
       Fl::event_x() and Fl::event_y() are set as well.
       This event is sent to the window's handle method.
      */
-  FL_ROTATE_GESTURE       = 28
+  FL_ROTATE_GESTURE       = 28,
+  /** The user has made a scroll gesture (Mac OS platform only).
+      The Fl::event_dx() and Fl::event_dy() methods can be used
+      to find the amount to scroll horizontally and vertically.
+      This event is sent to the window's handle method.
+     */
+  FL_SCROLL_GESTURE       = 29
+
 // DEV NOTE: Keep this list in sync with FL/names.h
 };
 
