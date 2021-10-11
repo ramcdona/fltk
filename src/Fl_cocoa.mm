@@ -1011,9 +1011,10 @@ static void cocoaRotateHandler(NSEvent *theEvent)
   }
   total_zoom = 1.0; // reset zoom (Debug)
   Fl::first_window(window);
-  Fl::e_dy = [theEvent rotation]*100000; // 10.5.2
-  total_rotation += Fl::e_dy/100000.0;
-  printf("cocoaRotateHandler: Fl::e_dy = %d (%7.3f), total = %8.3f\n", Fl::e_dy, Fl::e_dy/100000., total_rotation);
+  double rotation = -[theEvent rotation]; // 10.5.2
+  total_rotation += rotation;
+  Fl::e_dy = int(rotation * 100000);
+  printf("cocoaRotateHandler: Fl::e_dy = %d (%7.3f), total = %8.3f\n", Fl::e_dy, rotation, total_rotation);
   if (Fl::e_dy) {
     NSPoint pos = [theEvent locationInWindow];
     pos.y = window->h() - pos.y;
