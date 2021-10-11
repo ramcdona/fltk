@@ -925,14 +925,15 @@ static void cocoaMouseWheelHandler(NSEvent *theEvent)
   fl_lock_function();
   Fl_Window *window = (Fl_Window*)[(FLWindow*)[theEvent window] getFl_Window];
   Fl::first_window(window);
+  float s = Fl::screen_driver()->scale(0);
 
   NSEventSubtype subtype = [theEvent subtype];
   if ( subtype == NSEventSubtypeMouseEvent ){
     // Under OSX, mousewheel deltas are floats, but fltk only supports ints.
-    float s = Fl::screen_driver()->scale(0);
     int dx = roundf([theEvent deltaX] / s);
     int dy = roundf([theEvent deltaY] / s);
     // allow both horizontal and vertical movements to be processed by the widget
+    printf("cocoaMouseWheelHandler (subtype = mouse): s = %3d%%, dx = %3d, dy = %3d\n", int(s * 100.), dx, dy);
     if (dx) {
       Fl::e_dx = -dx;
       Fl::e_dy = 0;
@@ -948,6 +949,7 @@ static void cocoaMouseWheelHandler(NSEvent *theEvent)
     int dx = roundf([theEvent scrollingDeltaX]);
     int dy = roundf([theEvent scrollingDeltaY]);
     // allow both horizontal and vertical movements to be processed by the widget
+    printf("cocoaMouseWheelHandler (subtype = touch): s = %3d%%, dx = %3d, dy = %3d\n", int(s * 100.), dx, dy);
     if (dx) {
       Fl::e_dx = -dx;
       Fl::e_dy = 0;
@@ -962,6 +964,9 @@ static void cocoaMouseWheelHandler(NSEvent *theEvent)
   fl_unlock_function();
 }
 
+static double total_zoom = 1.0;
+static double total_rotation = 0.0;
+
 /*
  * Cocoa Magnify Gesture Handler
  */
@@ -974,9 +979,13 @@ static void cocoaMagnifyHandler(NSEvent *theEvent)
     fl_unlock_function();
     return;
   }
+  total_rotation = 0.0; // reset rotation (debug)
   Fl::first_window(window);
-  Fl::e_dy = [theEvent magnification]*1000; // 10.5.2
-  if ( Fl::e_dy) {
+  double zoom = [theEvent magnification] + 1.0;
+  total_zoom *= zoom;
+  Fl::e_dy = zoom * 100000; // delta zoom value (fixed in 1.4.0)
+  printf("cocoaMagnifyHandler: Fl::e_dy = %d, zoom = %8.5f, total zoom = %8.5f\n", Fl::e_dy, zoom, total_zoom);
+  if (Fl::e_dy != 100000) {
     NSPoint pos = [theEvent locationInWindow];
     pos.y = window->h() - pos.y;
     NSUInteger mods = [theEvent modifierFlags];
@@ -994,21 +1003,24 @@ static void cocoaMagnifyHandler(NSEvent *theEvent)
 static void cocoaRotateHandler(NSEvent *theEvent)
 {
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
-    fl_lock_function();
-    Fl_Window *window = (Fl_Window*)[(FLWindow*)[theEvent window] getFl_Window];
-    if ( !window->shown() ) {
-        fl_unlock_function();
-        return;
-    }
-    Fl::first_window(window);
-    Fl::e_dy = [theEvent rotation]*1000; // 10.5.2
-  if ( Fl::e_dy) {
-      NSPoint pos = [theEvent locationInWindow];
-      pos.y = window->h() - pos.y;
-      NSUInteger mods = [theEvent modifierFlags];
-      mods_to_e_state( mods );
-      update_e_xy_and_e_xy_root([theEvent window]);
-      Fl::handle( FL_ROTATE_GESTURE, window );
+  fl_lock_function();
+  Fl_Window *window = (Fl_Window*)[(FLWindow*)[theEvent window] getFl_Window];
+  if ( !window->shown() ) {
+    fl_unlock_function();
+    return;
+  }
+  total_zoom = 1.0; // reset zoom (Debug)
+  Fl::first_window(window);
+  Fl::e_dy = [theEvent rotation]*100000; // 10.5.2
+  total_rotation += Fl::e_dy/100000.0;
+  printf("cocoaRotateHandler: Fl::e_dy = %d (%7.3f), total = %8.3f\n", Fl::e_dy, Fl::e_dy/100000., total_rotation);
+  if (Fl::e_dy) {
+    NSPoint pos = [theEvent locationInWindow];
+    pos.y = window->h() - pos.y;
+    NSUInteger mods = [theEvent modifierFlags];
+    mods_to_e_state( mods );
+    update_e_xy_and_e_xy_root([theEvent window]);
+    Fl::handle( FL_ROTATE_GESTURE, window );
   }
   fl_unlock_function();
 #endif
