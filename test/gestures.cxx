@@ -36,6 +36,7 @@ public:
     double z = 0.0;
     switch(event) {
       case FL_MOUSEWHEEL:
+      case FL_SCROLL_GESTURE:
         if (Fl::event_dy() > 0)
           zoom += 0.1;
         else
@@ -101,6 +102,7 @@ public:
     int ret = 0;
     switch(event) {
       case FL_MOUSEWHEEL:
+      case FL_SCROLL_GESTURE:
         if (Fl::event_dy() > 0)
           angle += 10.0;
         else
