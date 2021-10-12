@@ -969,6 +969,10 @@ static double total_rotation = 0.0;
 
 /*
  * Cocoa Magnify Gesture Handler
+ *
+ * The magnification accessor method returns a floating-point (CGFloat) value
+ * representing a factor of magnification. For zooming in or out, you add the
+ * value from the magnification accessor to 1.0 to get the scale factor.
  */
 static void cocoaMagnifyHandler(NSEvent *theEvent)
 {
@@ -999,6 +1003,10 @@ static void cocoaMagnifyHandler(NSEvent *theEvent)
 
 /*
  * Cocoa Rotate Gesture Handler
+ *
+ * The rotation accessor method returns a floating-point value representing
+ * the degrees of rotation, counterclockwise. For rotation, you add the newest
+ * degree of rotation to the view’s current rotation value.
  */
 static void cocoaRotateHandler(NSEvent *theEvent)
 {
