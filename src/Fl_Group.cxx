@@ -245,8 +245,9 @@ int Fl_Group::handle(int event) {
     }
     return 0;
 
+  case FL_SCROLL_GESTURE: // experimental!
+  case FL_ROTATE_GESTURE: // experimental!
   case FL_MOUSEWHEEL:
-  case FL_SCROLL_GESTURE:
     for (i = children(); i--;) {
       o = a[i];
       if (o->takesevents() && Fl::event_inside(o) && send(o, event))
