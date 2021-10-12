@@ -135,9 +135,100 @@ void dial_cb(Fl_Widget *w, void *v) {
   d->set_label();
 }
 
+class myPad : public Fl_Group{
+  float rx, ry, rscale, rtheta;
+
+public:
+  myPad(int x, int y, int w, int h, const char * l = 0 ): Fl_Group(x, y, w, h, l) {
+    reset();
+  }
+
+  void reset() {
+    rx = 0;
+    ry = 0;
+    rscale = 1;
+    rtheta = 0.0;
+  }
+
+  int handle(int event) {
+    int ret = 0;
+    double z = 0;
+    switch(event) {
+//      case FL_RELEASE:
+//        reset();
+//        parent()->redraw();
+//        return 1;
+//        break;
+      case FL_MOUSEWHEEL:
+        if (Fl::event_dy() > 0)
+          rscale += 0.1;
+        else
+          rscale -= 0.1;
+        if (rscale < zmin) rscale = zmin;
+        if (rscale > zmax) rscale = zmax;
+        redraw();
+        return 1;
+        break;
+      case FL_ZOOM_GESTURE:
+        z = Fl::event_dy()/100000.0;
+        printf("handle FL_ZOOM_GESTURE: %d (%5.3f)\n", Fl::event_dy(), z);
+        if (z > 0)
+          rscale *= z;
+        if (rscale < zmin) rscale = zmin;
+        if (rscale > zmax) rscale = zmax;
+        redraw();
+        return 1;
+        break;
+      case FL_SCROLL_GESTURE:
+        if (Fl::event_dy() != 0) ry += Fl::event_dy();
+        if ( ry > 200 ) ry = 200;
+        if ( ry < -200 ) ry = -200;
+        if (Fl::event_dx() != 0) rx += Fl::event_dx();
+        if ( rx > 200 ) rx = 200;
+        if ( rx < -200 ) rx = -200;
+        redraw();
+        return 1;
+        break;
+      case FL_ROTATE_GESTURE:
+        rtheta += Fl::event_dy() / 100000.;
+        if (rtheta < 0.) rtheta += 360.;
+        if (rtheta > 360.) rtheta -= 360;
+        redraw();
+        return 1;
+        break;
+      default:
+        break;
+    }
+    return Fl_Group::handle(event) ? 1 : ret;
+  }
+
+  void draw() {
+    Fl_Group::draw();
+
+    int rw = 30;
+
+    fl_color(FL_BLACK);
+
+    fl_translate( 880 + 220, 220 ); // Center of group
+    fl_rotate( rtheta );
+    fl_scale( rscale );
+    fl_push_matrix();
+
+    fl_begin_polygon();
+    fl_vertex( rx - rw, ry - rw );
+    fl_vertex( rx + rw, ry - rw );
+    fl_vertex( rx + rw, ry + rw );
+    fl_vertex( rx - rw, ry + rw );
+    fl_end_polygon();
+
+    fl_pop_matrix();
+
+  }
+};
+
 int main(int argc, char **argv) {
 
-  Fl_Double_Window *window = new Fl_Double_Window(880, 510);
+  Fl_Double_Window *window = new Fl_Double_Window(3*440, 510);
 
   // embed widgets in their own groups to speed up drawing
 
@@ -156,7 +247,12 @@ int main(int argc, char **argv) {
   d2->callback(dial_cb);
   g2->end();
 
-  Fl_Button *b3 = new Fl_Button(10, 450, 860, 50, "E&xit");
+  myPad *g3 = new myPad(880, 0, 440, 440);
+  g3->box(FL_FLAT_BOX);
+  g3->color(0xffdddd00); // light red
+  g3->end();
+
+  Fl_Button *b3 = new Fl_Button(10, 450, 1300, 50, "E&xit");
   b3->callback(exitcb, 0);
 
   window->end();
