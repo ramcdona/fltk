@@ -145,16 +145,18 @@ int main(int argc, char **argv) {
   g1->box(FL_FLAT_BOX);
   g1->color(0xddffdd00); // light green
   myButton *b1 = new myButton(20, 20, 200, 100);
+  myDial *d1 = new myDial(130, 240, 180, 180);
+  d1->callback(dial_cb);
   g1->end();
 
   Fl_Group *g2 = new Fl_Group(440, 0, 440, 440);
   g2->box(FL_FLAT_BOX);
   g2->color(0xddddff00); // light blue
-  myDial *d1 = new myDial(460, 20, 400, 400);
-  d1->callback(dial_cb);
+  myDial *d2 = new myDial(460, 30, 380, 380);
+  d2->callback(dial_cb);
   g2->end();
 
-  Fl_Button *b3 = new Fl_Button(220, 460, 440, 30, "E&xit");
+  Fl_Button *b3 = new Fl_Button(10, 450, 860, 50, "E&xit");
   b3->callback(exitcb, 0);
 
   window->end();
