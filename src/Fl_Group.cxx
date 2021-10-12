@@ -245,6 +245,7 @@ int Fl_Group::handle(int event) {
     }
     return 0;
 
+  case FL_ZOOM_GESTURE: // experimental!
   case FL_SCROLL_GESTURE: // experimental!
   case FL_ROTATE_GESTURE: // experimental!
   case FL_MOUSEWHEEL:
