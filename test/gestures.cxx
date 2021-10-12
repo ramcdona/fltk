@@ -136,15 +136,31 @@ void dial_cb(Fl_Widget *w, void *v) {
 }
 
 int main(int argc, char **argv) {
-  Fl_Double_Window *window = new Fl_Double_Window(800, 400);
+
+  Fl_Double_Window *window = new Fl_Double_Window(880, 510);
+
+  // embed widgets in their own groups to speed up drawing
+
+  Fl_Group *g1 = new Fl_Group(0, 0, 440, 440);
+  g1->box(FL_FLAT_BOX);
+  g1->color(0xddffdd00); // light green
   myButton *b1 = new myButton(20, 20, 200, 100);
+  g1->end();
 
-  myDial *d1 = new myDial(420, 20, 360, 360);
+  Fl_Group *g2 = new Fl_Group(440, 0, 440, 440);
+  g2->box(FL_FLAT_BOX);
+  g2->color(0xddddff00); // light blue
+  myDial *d1 = new myDial(460, 20, 400, 400);
   d1->callback(dial_cb);
+  g2->end();
 
-  Fl_Button *b3 = new Fl_Button(700, 350, 80, 30, "E&xit");
+  Fl_Button *b3 = new Fl_Button(220, 460, 440, 30, "E&xit");
   b3->callback(exitcb, 0);
+
   window->end();
+  window->resizable(window);
+  window->size_range(430, 240);
   window->show(argc, argv);
+
   return Fl::run();
 }
