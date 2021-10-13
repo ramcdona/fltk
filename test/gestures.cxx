@@ -190,7 +190,7 @@ public:
         return 1;
         break;
       case FL_ROTATE_GESTURE:
-        rtheta += Fl::event_dy() / 100000.;
+        rtheta -= Fl::event_dy() / 100000.;
         if (rtheta < 0.) rtheta += 360.;
         if (rtheta > 360.) rtheta -= 360;
         redraw();
