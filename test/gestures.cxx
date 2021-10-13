@@ -210,15 +210,15 @@ public:
     fl_color(FL_BLACK);
 
     fl_push_matrix();
-    fl_translate( 880 + 220, 220 ); // Center of group
+    fl_translate( 880 + 220 + rx, 220 + ry ); // Center of group
     fl_rotate( rtheta );
     fl_scale( rscale );
 
     fl_begin_polygon();
-    fl_vertex( rx - rw, ry - rw );
-    fl_vertex( rx + rw, ry - rw );
-    fl_vertex( rx + rw, ry + rw );
-    fl_vertex( rx - rw, ry + rw );
+    fl_vertex( -rw, -rw );
+    fl_vertex( rw, -rw );
+    fl_vertex( rw, rw );
+    fl_vertex( -rw, rw );
     fl_end_polygon();
 
     fl_pop_matrix();
