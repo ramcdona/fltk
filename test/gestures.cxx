@@ -209,10 +209,10 @@ public:
 
     fl_color(FL_BLACK);
 
+    fl_push_matrix();
     fl_translate( 880 + 220, 220 ); // Center of group
     fl_rotate( rtheta );
     fl_scale( rscale );
-    fl_push_matrix();
 
     fl_begin_polygon();
     fl_vertex( rx - rw, ry - rw );
