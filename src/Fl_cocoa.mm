@@ -951,13 +951,13 @@ static void cocoaMouseWheelHandler(NSEvent *theEvent)
     // allow both horizontal and vertical movements to be processed by the widget
     printf("cocoaMouseWheelHandler (subtype = touch): s = %3d%%, dx = %3d, dy = %3d\n", int(s * 100.), dx, dy);
     if (dx) {
-      Fl::e_dx = -dx;
+      Fl::e_dx = dx;
       Fl::e_dy = 0;
       Fl::handle( FL_SCROLL_GESTURE, window );
     }
     if (dy) {
       Fl::e_dx = 0;
-      Fl::e_dy = -dy;
+      Fl::e_dy = dy;
       Fl::handle( FL_SCROLL_GESTURE, window );
     }
   }
