@@ -51,6 +51,7 @@ set(SIMPLE_SOURCES
   progress-simple
   shapedwindow
   simple-terminal
+  SpreadSheetWidget
   table-as-container
   table-simple
   table-sort
