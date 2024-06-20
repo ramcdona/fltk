@@ -6,6 +6,7 @@
 // Needed for everything else
 #include "SpreadSheetWidget.h"
 #include <cfloat>
+#include <math.h>
 
 void parse_table(const char *str, int len, std::vector<std::vector<string> > &table) {
   // strtok won't work on const char *, so make a copy.
