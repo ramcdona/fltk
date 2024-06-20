@@ -10,7 +10,7 @@
 
 void parse_table(const char *str, int len, std::vector<std::vector<string> > &table) {
   // strtok won't work on const char *, so make a copy.
-  char str_copy[len];
+  char str_copy[len + 1];     // added: '+ 1'
   strcpy(str_copy, str);
 
   // Parse lines by \n
@@ -25,7 +25,7 @@ void parse_table(const char *str, int len, std::vector<std::vector<string> > &ta
   int ncol = 0;
   for (int i = 0; i < lines.size(); i++) {
     // strtok won't work on const char *, so make a copy.
-    char buf[lines[i].size()];
+    char buf[lines[i].size() + 1];    // added: '+ 1'
     strcpy(buf, lines[i].c_str());
 
     // Parse fields by \t
