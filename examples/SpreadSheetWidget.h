@@ -60,11 +60,11 @@ public:
   void set_LabelAlign(int a) { m_LabelAlign = a; };
 
 protected:
-  int handle(int event) override;
+  int handle(int event) FL_OVERRIDE;
 
   string col_header_txt(int C);
 
-  void draw_cell(TableContext context, int = 0, int = 0, int = 0, int = 0, int = 0, int = 0) override;
+  void draw_cell(TableContext context, int = 0, int = 0, int = 0, int = 0, int = 0, int = 0) FL_OVERRIDE;
 
   void event_callback2(); // table's event callback (instance)
 
