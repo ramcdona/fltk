@@ -407,9 +407,9 @@ template <typename T> void SpreadSheet<T>::paste(const char *str, int len) {
         update_size(datarow, datacol);
       }
 
-      for (int i = 0; i < table.size(); i++) {
+      for (int i = 0; i < (int)table.size(); i++) {
         int idata = i + select_row;
-        for (int j = 0; j < table[i].size(); j++) {
+        for (int j = 0; j < (int)table[i].size(); j++) {
           int jdata = j + select_col;
 
           set_value(idata, jdata, table[i][j].c_str());

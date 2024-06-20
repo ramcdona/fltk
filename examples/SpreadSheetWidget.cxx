@@ -23,7 +23,7 @@ void parse_table(const char *str, int len, std::vector<std::vector<string> > &ta
 
   table.resize(lines.size());
   int ncol = 0;
-  for (int i = 0; i < lines.size(); i++) {
+  for (int i = 0; i < (int)lines.size(); i++) {
     // strtok won't work on const char *, so make a copy.
     char buf[lines[i].size() + 1];    // added: '+ 1'
     strcpy(buf, lines[i].c_str());
@@ -35,13 +35,13 @@ void parse_table(const char *str, int len, std::vector<std::vector<string> > &ta
       f = strtok(nullptr, "\t");
     }
 
-    if (table[i].size() > ncol) {
+    if ((int)table[i].size() > ncol) {
       ncol = table[i].size();
     }
   }
 
   // ensure all rows have same number of columns.
-  for (int i = 0; i < table.size(); i++) {
+  for (int i = 0; i < (int)table.size(); i++) {
     table[i].resize(ncol);
   }
 }
