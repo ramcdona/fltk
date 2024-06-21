@@ -9,8 +9,10 @@
 #include <math.h>
 
 // strtok replacement from https://stackoverflow.com/questions/26522583/c-strtok-skips-second-token-or-consecutive-delimiter
-char *paxtok(char *str, char *seps) {
-  static char *tpos, *tkn, *pos = NULL;
+// ... modified to fix 'const' and 'static' attributes, remove superfluous variable 'tkn'
+char *paxtok(char *str, const char *seps) {
+  static char *pos = NULL;
+  char *tpos;
   static char savech;
 
   // Specific actions for first and subsequent calls.
@@ -43,8 +45,7 @@ char *paxtok(char *str, char *seps) {
 
   tpos = pos;
   while (*tpos != '\0') {
-    tkn = strchr(seps, *tpos);
-    if (tkn != NULL)
+    if (strchr(seps, *tpos))
       break;
     tpos++;
   }
