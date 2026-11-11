@@ -291,13 +291,12 @@ int Fl_Dockable_Group::handle_docking_target(bool& processed, Fl_Widget *docking
       }
       break;
     case FL_DOCK_LEAVE:
-      if (Fl_Dockable_Group::active_dockable_) {
-        if (active_dockable_->state_ != DRAG) {
-          active_dockable_->handle(FL_DOCK_LEAVE);
-          if (target_state_f) target_state_f(docking_target, false);
-        }
-        Fl_Dockable_Group::active_dockable_->set_state_(Fl_Dockable_Group::DRAG);
+      if (!Fl_Dockable_Group::active_dockable_) break;
+      if (active_dockable_->state_ != DRAG) {
+        active_dockable_->handle(FL_DOCK_LEAVE);
+        if (target_state_f) target_state_f(docking_target, false);
       }
+      Fl_Dockable_Group::active_dockable_->set_state_(Fl_Dockable_Group::DRAG);
       if (active_dockable_->active_target_) {
         if( target_state_f) target_state_f(active_dockable_->active_target_, false);
         active_dockable_->active_target_ = NULL;
