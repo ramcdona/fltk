@@ -308,6 +308,7 @@ int Fl_Dockable_Group::handle_docking_target(bool& processed, Fl_Widget *docking
       if (acceptable_f && !acceptable_f(docking_target, dock)) return 0;
       dock->driver_->before_dock();
       dock_payload_f(docking_target, dock);
+      dock->driver_->show_subwindows();
       dock->handle(FL_DOCK_RELEASE);
       dock->active_target_ = NULL;
       dock->after_release_();
@@ -479,7 +480,41 @@ int Fl_Dockable_Group_Driver::handle_drag_widget_(int event) {
 }
 
 
+// Hides every shown subwindow under g, such as an Fl_Gl_Window.  A subwindow cannot move to another window
+// while it is shown, nor be resized while it is visible in a window not shown; show_subwindows() brings
+// them back once g is in its new window.
+void Fl_Dockable_Group_Driver::hide_subwindows(Fl_Group *g) {
+  for (int i = 0; i < g->children(); i++) {
+    Fl_Widget *c = g->child(i);
+    Fl_Window *w = c->as_window();
+    if (w) {
+      if (w->shown()) {
+        w->hide();
+        hidden_subwindows_.push_back(w);
+      }
+    } else if (c->as_group()) {
+      hide_subwindows(c->as_group());
+    }
+  }
+}
+
+
+// Shows the subwindows hide_subwindows() hid, now in the group's new window, or makes them visible so they
+// show with that window if it is not shown yet, or with their parent group if it is hidden.
+void Fl_Dockable_Group_Driver::show_subwindows() {
+  Fl_Window *top = dockable_->window();
+  bool shown = (top && top->shown());
+  for (size_t i = 0; i < hidden_subwindows_.size(); i++) {
+    Fl_Window *w = hidden_subwindows_[i];
+    if (shown && w->parent()->visible_r()) w->show();
+    else w->set_visible();
+  }
+  hidden_subwindows_.clear();
+}
+
+
 void Fl_Dockable_Group_Driver::before_dock() {
+  hide_subwindows(dockable_);
   Fl_Window *top = dockable_->window();
   top->remove(dockable_);
   delete top;
@@ -495,9 +530,10 @@ public:
       Fl_Double_Window(w, h, l), cursor_(FL_CURSOR_DEFAULT) {
     box(FL_UP_BOX);
     int margin = Fl::box_dx(box());
+    size(w + 2*margin, h + 2*margin); // before the group is in it, so the group keeps its size
+    add(dock); // a group in no window cannot move its subwindows
     dock->position(margin, margin);
     resizable(dock);
-    size(w + 2*margin, h + 2*margin);
     cursor(cursor_);
   }
   int handle(int event) override;
@@ -561,6 +597,7 @@ int resizable_draggable_win::handle(int event) {
 Fl_Double_Window *Fl_Dockable_Group_Driver::undock() {
   // transform the dockable group into a draggable, borderless toplevel window
   Fl_Group *top = dockable_->parent();
+  hide_subwindows(dockable_);
   if (top) {
     top->remove(dockable_);
     Fl_Box *tmp = new Fl_Dockable_Group::Docking_Target_Box(
@@ -573,6 +610,7 @@ Fl_Double_Window *Fl_Dockable_Group_Driver::undock() {
                    label, dockable_) : new Fl_Double_Window(dockable_->w(), dockable_->h(), label);
   win->end();
   win->add(dockable_);
+  show_subwindows();
   dockable_->show(); // necessary for tabs
   win->border(0);
   Fl::pushed(dockable_->drag_widget()); // necessary for tabs

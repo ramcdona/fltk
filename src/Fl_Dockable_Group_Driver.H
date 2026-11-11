@@ -17,6 +17,7 @@
 #ifndef FL_DOXYGEN
 
 #include <FL/Fl_Dockable_Group.H>
+#include <vector>
 
 class Fl_Dockable_Group_Driver {
   friend class Fl_Dockable_Group;
@@ -28,7 +29,10 @@ protected:
   Fl_Dockable_Group *dockable_;
   Fl_Double_Window *undock();
   static void dragged_dockable_cb(Fl_Window *win);
+  std::vector<Fl_Window*> hidden_subwindows_; // Subwindows hidden while the group changes window
 public:
+  void hide_subwindows(Fl_Group *g);
+  void show_subwindows();
   static void active_dockable(Fl_Dockable_Group *dock) { Fl_Dockable_Group::active_dockable_ = dock; }
   class drag_box_class : public Fl_Box {
   public:
