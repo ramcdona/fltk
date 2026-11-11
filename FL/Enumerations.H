@@ -359,6 +359,11 @@ enum Fl_Event { // events
   FL_DOCK_LEAVE = 35,
   /** Sent to an Fl_Dockable_Group object when it undocks from a docking target widget. */
   FL_UNDOCK = 36,
+  /** Sent to an Fl_Dockable_Group object when its window becomes a subwindow of its captive group, as it is
+   released over that group, or a top-level window again, as it is released away from it: its window()->parent()
+   tells which.  Not sent under Wayland.
+   \see Fl_Dockable_Group::captive() */
+  FL_DOCK_CAPTIVE = 37,
   // DEV NOTE: Keep this list in sync with FL/names.h
 };
 

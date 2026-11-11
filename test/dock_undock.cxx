@@ -22,11 +22,26 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Flex.H>
 #include <FL/Fl_Tile.H>
+#include <FL/Fl_Check_Button.H>
 #include <FL/platform.H> // for fl_open_display()
 
 
 void delete_win(Fl_Window *win) {
   delete win;
+}
+
+
+// The dockables of this program, which a closed window deletes, and the group they float in when
+// released over it
+static Fl_Widget_Tracker *dockables[3];
+static Fl_Group *captive_area;
+
+static void captive_cb(Fl_Widget *w, void *) {
+  Fl_Group *g = NULL;
+  if (((Fl_Check_Button*)w)->value()) g = captive_area;
+  for (int i = 0; i < 3; i++) {
+    if (dockables[i]->exists()) ((Fl_Dockable_Group*)dockables[i]->widget())->captive(g);
+  }
 }
 
 
@@ -220,6 +235,9 @@ public:
       printf("%s receives FL_DOCK_LEAVE\n",label());
     } else if (event == FL_DOCK_ENTER) {
       printf("%s receives FL_DOCK_ENTER\n",label());
+    } else if (event == FL_DOCK_CAPTIVE) {
+      if (window()->parent()) printf("%s receives FL_DOCK_CAPTIVE: in the captive area\n",label());
+      else printf("%s receives FL_DOCK_CAPTIVE: in a top-level window\n",label());
     }
     return Fl_Dockable_Group::handle(event);
   }
@@ -234,6 +252,7 @@ int main(int argc, char **argv) {
   int X, Y, W, H;
   tabs->client_area(X, Y, W, H); // requires display to be opened
   Fl_Dockable_Group *dock = new Fl_Dockable_Group(X, Y, W, H, "Clock Dockable");
+  dockables[0] = new Fl_Widget_Tracker(dock);
   dock->align(FL_ALIGN_CLIP+FL_ALIGN_LEFT+FL_ALIGN_INSIDE);
   dock->color(FL_YELLOW);
   new Fl_Clock(245, 90, 60, 60);
@@ -248,6 +267,7 @@ int main(int argc, char **argv) {
   source->show(argc, argv);
   
   dock = new Dockable_With_Events(25, 60, 305, 95, "Round-clock Dockable");
+  dockables[1] = new Fl_Widget_Tracker(dock);
   dock->align(FL_ALIGN_CLIP+FL_ALIGN_BOTTOM+FL_ALIGN_INSIDE);
   dock->color(FL_DARK_GREEN);
   new Fl_Round_Clock(245, 65, 60, 60);
@@ -286,6 +306,7 @@ int main(int argc, char **argv) {
   Fl_Box *yellow = new Fl_Box(FL_DOWN_BOX, 5, 5, 250, 160, "");
   yellow->color(FL_YELLOW);
   dock = new Fl_Dockable_Group(255, 5, 80, 160, "Small-clock Dockable");
+  dockables[2] = new Fl_Widget_Tracker(dock);
   dock->align(FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
   dock->color(FL_BLUE);
   dock->labelcolor(FL_WHITE);
@@ -307,6 +328,23 @@ int main(int argc, char **argv) {
   flex->end();
   source->end();
   source->show();
+
+  // A floating dockable released over the captive area floats in a subwindow of it
+  // (not under Wayland, where a floating dockable is always a top-level window)
+  destination = new Fl_Window(destination->x(), destination->y() + destination->h() + 50, 400, 300,
+                              "Captive area");
+  destination->callback((Fl_Callback0*)delete_win);
+  Fl_Check_Button *check = new Fl_Check_Button(10, 5, 380, 25, "Float dockables released over the area inside it");
+  check->callback(captive_cb);
+  captive_area = new Fl_Group(10, 35, 380, 255);
+  captive_area->box(FL_DOWN_BOX);
+  captive_area->color(FL_DARK2);
+  captive_area->resizable(NULL); // floating dockables keep their size and position
+  captive_area->end();
+  destination->end();
+  destination->resizable(captive_area);
+  destination->show();
+
   source->wait_for_expose();
   last_win->show();
   

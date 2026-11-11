@@ -25,6 +25,7 @@
 #include <FL/Fl_Box.H>
 
 class Fl_Dockable_Group_Driver;
+class Fl_Widget_Tracker;
 
 /** A group that can be detached from its parent, dragged with the mouse to an adequate widget, and docked there.
  Like any Fl_Group, an Fl_Dockable_Group can contain any set of Fl_Widget's.
@@ -56,7 +57,8 @@ class Fl_Dockable_Group_Driver;
  FLTK sends these docking-related events to an Fl_Dockable_Group object during its lifetime: (1) \ref FL_DOCK_ENTER
  when it's dragged and enters a docking area; (2) \ref FL_DOCK_LEAVE when it's dragged out of a docking area;
  (3) \ref FL_DOCK_RELEASE when it's above a docking area and the mouse is released so it docks there
- (usually it's also resized in this operation); (4) \ref FL_UNDOCK when it's being dragged away from its docked place.
+ (usually it's also resized in this operation); (4) \ref FL_UNDOCK when it's being dragged away from its docked place;
+ (5) \ref FL_DOCK_CAPTIVE when its window becomes a subwindow of its captive group, or a top-level window again.
  A user-defined Fl_Dockable_Group-derived class can override its \p handle(int) method and act upon these events.
  
  The Fl_Window containing an undocked, draggable Fl_Dockable_Group object has no titlebar. It can be resized
@@ -68,6 +70,10 @@ class Fl_Dockable_Group_Driver;
  (use the \ref close_dockable member variable to localize this dialog). This default callback can be replaced by
  an application-defined one, but the modified callback needs be assigned to the newly created window
  carrying the dockable each time this dockable receives the FL_UNDOCK event.
+
+ An undocked Fl_Dockable_Group given a captive group with captive() floats, when it is released over that
+ group, in a subwindow of it rather than in a top-level window: it stays inside the application's window and
+ moves, hides and minimizes with it.  It receives \ref FL_DOCK_CAPTIVE each time its window changes kind.
  
  Example program \p test/dock_undock.cxx shows the complete implementations of two docking target classes,
  \p tabs_docking_target derived from Fl_Tabs  and \p flex_docking_target derived from Fl_Flex each with a defined behavior.
@@ -169,6 +175,7 @@ private:
   Fl_Widget *active_target_; // Target widget below the active dockable
   static Fl_Dockable_Group *active_dockable_; // The Fl_Dockable_Group that is being dragged
   Fl_Widget *origin_target_; // Target widget where the Fl_Dockable_Group comes from
+  Fl_Widget_Tracker *captive_; // Tracks the group the Fl_Dockable_Group floats in when released over it, or NULL
   void set_state_(enum states s); // Sets the state of the Fl_Dockable_Group
 public:
   /** Gets the state of the Fl_Dockable_Group */
@@ -179,7 +186,20 @@ public:
   static void check_origin_target(Fl_Widget *target);
   static Fl_Dockable_Group *as_dockable(Fl_Widget *widget);
   static const char *close_dockable;
-  Fl_Double_Window *make_draggable();
+  Fl_Double_Window *make_draggable(Fl_Group *in = NULL);
+  /** Sets the group this Fl_Dockable_Group floats in, captive, when it is released over it.
+   While dragged, an undocked Fl_Dockable_Group is in a top-level window.  Released over a docking area, it
+   docks there; released over its captive group, its window becomes a subwindow of that group, which stays
+   inside it and moves, hides and minimizes with it; released anywhere else, its window is top-level.  A
+   captive window dragged away is moved as a subwindow of its group, clipped to it, and becomes top-level
+   if it is released outside the group.  The default, NULL, lets the group float only in top-level windows.
+   \note Ignored under Wayland, where dragging a floating Fl_Dockable_Group requires its window to be a
+   top-level window (an xdg_toplevel), so it always floats in a top-level window.
+   \param g NULL, or a group, often a window, that the application leaves room in for such subwindows.  It
+   should keep its children's size as it is resized. */
+  void captive(Fl_Group *g);
+  /** Gets the group this Fl_Dockable_Group floats in when it is released over it, or NULL, as after that group was deleted. */
+  Fl_Group *captive() const;
 };
 
 #endif // Fl_Dockable_Group_H

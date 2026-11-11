@@ -405,13 +405,18 @@ and the definition of docking target widgets that can receive and dock
 Fl_Dockable_Group objects dragged above them.
 
 The docking/undocking mechanism generates \ref FL_DOCK_ENTER, \ref FL_DOCK_DRAG,
-\ref FL_DOCK_LEAVE, \ref FL_DOCK_RELEASE, and \ref FL_UNDOCK events that are
-mostly handled internally by this mechanism.
+\ref FL_DOCK_LEAVE, \ref FL_DOCK_RELEASE, \ref FL_UNDOCK, and \ref FL_DOCK_CAPTIVE
+events that are mostly handled internally by this mechanism.
+
+An undocked Fl_Dockable_Group given a captive group with Fl_Dockable_Group::captive()
+can float inside the application's window rather than in a window of its own: released
+over that group, its window becomes a subwindow of the group, and it receives
+\ref FL_DOCK_CAPTIVE.  This is not available under Wayland.
 
 Nevertheless, a client app that wishes to be informed of when an Fl_Dockable_Group object
 changes state can do so deriving a class from Fl_Dockable_Group, overriding
 its handle(int) method, and following \ref FL_DOCK_ENTER, \ref FL_DOCK_LEAVE,
-\ref FL_DOCK_RELEASE or \ref FL_UNDOCK events.
+\ref FL_DOCK_RELEASE, \ref FL_UNDOCK or \ref FL_DOCK_CAPTIVE events.
   
 \section events_fl_misc Other events
 \ref FL_SCREEN_CONFIGURATION_CHANGED

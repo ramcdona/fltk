@@ -85,6 +85,7 @@ static std::map<int, const char*> fl_eventnames = {
   { FL_DOCK_RELEASE, "FL_DOCK_RELEASE" },
   { FL_DOCK_LEAVE, "FL_DOCK_LEAVE" },
   { FL_UNDOCK, "FL_UNDOCK" },
+  { FL_DOCK_CAPTIVE, "FL_DOCK_CAPTIVE" },
 
   { Fl::Pen::DETECTED, "Fl::Pen::DETECTED" },
   { Fl::Pen::CHANGED, "Fl::Pen::CHANGED" },

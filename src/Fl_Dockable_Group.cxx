@@ -21,6 +21,7 @@
 #include <FL/Fl_Dockable_Group.H>
 #include <FL/Fl_Window.H>
 #include <FL/fl_ask.H>
+#include <FL/Fl_Widget_Tracker.H>
 #include "Fl_Dockable_Group_Driver.H"
 #include <set>
 
@@ -54,6 +55,7 @@ Fl_Dockable_Group::Fl_Dockable_Group(int x, int y, int w, int h, const char *t) 
   label_for_states();
   active_target_ = NULL;
   origin_target_ = NULL;
+  captive_ = NULL;
   box(FL_FLAT_BOX);
   dockables_.insert(this);
 }
@@ -63,6 +65,18 @@ Fl_Dockable_Group::~Fl_Dockable_Group() {
   if (active_dockable_ == this) active_dockable_ = NULL;
   dockables_.erase(this);
   delete driver_;
+  delete captive_;
+}
+
+
+void Fl_Dockable_Group::captive(Fl_Group *g) {
+  delete captive_;
+  captive_ = (g ? new Fl_Widget_Tracker(g) : NULL);
+}
+
+
+Fl_Group *Fl_Dockable_Group::captive() const {
+  return (captive_ && captive_->exists() ? (Fl_Group*)captive_->widget() : NULL);
 }
 
 
@@ -198,16 +212,26 @@ void Fl_Dockable_Group::color_targets_following_dock_() {
   if (Fl::event_button() != FL_LEFT_MOUSE) return;
   int X = Fl::event_x_root(); // screen coordinates of the dockable-dragging mouse
   int Y = Fl::event_y_root();
-  Fl_Window *dock = top_window(); // the dockable being dragged as a window
+  // the dockable being dragged as a window: a top-level window, or a subwindow of its captive group,
+  // whose top-level window may hold docking targets
+  Fl_Window *dock = window();
+  Fl_Window *dock_top = dock->top_window();
   Fl_Window *win = Fl::first_window();
   bool found = false;
   while (win) { // search other window on same screen below the mouse
-    if (win != dock && !win->parent() && win->screen_num() == dock->screen_num()) {
+    if (win != dock && !win->parent() && win->screen_num() == dock_top->screen_num()) {
       if (X >= win->x() && X < win->x() + win->w() && Y >= win->y() && Y < win->y() + win->h()) {
         int event = 0;
         if (this->state_ == DRAG) event = FL_DOCK_ENTER;
         else if (this->state_ == DOCK) event = FL_DOCK_DRAG;
-        if (event) win->handle(event);
+        if (event && dock->parent() && win == dock_top) {
+          // the dragged window, a subwindow of win, takes no event meant for the targets around it
+          dock->clear_visible();
+          win->handle(event);
+          dock->set_visible();
+        } else if (event) {
+          win->handle(event);
+        }
         found = true;
         break;
       }
@@ -399,12 +423,16 @@ int Fl_Dockable_Group::handle_drag_widget(int event) {
  Call this member function after construction of a Fl_Dockable_Group object
  and after its drag widget was assigned to put it inside a borderless top-level window,
  in the undocked, draggable state.
+ \param in NULL, or a group the window is made a subwindow of, as when the Fl_Dockable_Group is
+ released over its captive group.  Position the window in the coordinates of that group's window.
+ Ignored under Wayland, where the window is always top-level.
  \return The created window which needs to be show()'n. */
-Fl_Double_Window *Fl_Dockable_Group::make_draggable() {
+Fl_Double_Window *Fl_Dockable_Group::make_draggable(Fl_Group *in) {
   if (state() == DRAG)
     return window()->as_double_window();
   origin_target_ = NULL;
   Fl_Double_Window *win = driver_->undock();
+  if (in && !Fl_Dockable_Group_Driver::using_wayland) in->add(win);
   Fl::pushed(NULL);
   return win;
 }
@@ -443,6 +471,45 @@ void Fl_Dockable_Group_Driver::dragged_dockable_cb(Fl_Window *win) {
     Fl_Dockable_Group::active_dockable_ = NULL;
     Fl::delete_widget(win);
   }
+}
+
+
+// Moves a window to X, Y in screen coordinates, in the coordinates of its parent window if it is a subwindow
+static void place_window(Fl_Window *w, int X_root, int Y_root) {
+  Fl_Window *p = w->window();
+  if (p) w->position(X_root - p->x_root(), Y_root - p->y_root());
+  else w->position(X_root, Y_root);
+}
+
+
+// Moves the window of a floating group into group g as a subwindow, at X, Y in screen coordinates and
+// inside g as far as it fits, or, if g is NULL, out of it into a top-level window at X, Y
+void Fl_Dockable_Group_Driver::float_in(Fl_Group *g, int X_root, int Y_root) {
+  Fl_Window *w = dockable_->window();
+  hide_subwindows(dockable_);
+  w->hide();
+  if (w->parent()) w->parent()->remove(w);
+  if (g) {
+    was_non_modal_ = w->non_modal();
+    w->clear_modal_states();
+    Fl_Window *gw = g->as_window() ? g->as_window() : g->window();
+    int gx = 0, gy = 0;
+    if (!g->as_window()) { gx = g->x(); gy = g->y(); }
+    int x = X_root - gw->x_root();
+    int y = Y_root - gw->y_root();
+    if (x + w->w() > gx + g->w()) x = gx + g->w() - w->w();
+    if (y + w->h() > gy + g->h()) y = gy + g->h() - w->h();
+    if (x < gx) x = gx;
+    if (y < gy) y = gy;
+    g->add(w);
+    w->position(x, y);
+  } else {
+    if (was_non_modal_) w->set_non_modal();
+    w->position(X_root, Y_root);
+  }
+  w->show();
+  show_subwindows();
+  dockable_->handle(FL_DOCK_CAPTIVE);
 }
 
 
@@ -487,11 +554,27 @@ int Fl_Dockable_Group_Driver::handle_drag_widget_(int event) {
              (dock->state_ == Fl_Dockable_Group::DRAG || dock->state_ == Fl_Dockable_Group::DOCK)) {
     int deltax = Fl::event_x_root() - fromx; // Drag dockable around
     int deltay = Fl::event_y_root() - fromy;
-    dock->window()->position(winx + deltax, winy + deltay);
+    place_window(dock->window(), winx + deltax, winy + deltay);
     dock->color_targets_following_dock_();
     return 1;
   } else if (event == FL_RELEASE && dock->state_ == Fl_Dockable_Group::DOCK) { // Dock dockable in place
     return dockable_->active_target_->handle(FL_DOCK_RELEASE);
+  } else if (event == FL_RELEASE && dock->state_ == Fl_Dockable_Group::DRAG && dock->captive() && dock->window()) {
+    // Released over its captive group, the group floats in a subwindow of it; elsewhere, in a top-level window
+    Fl_Group *g = dock->captive();
+    Fl_Window *gw = g->as_window() ? g->as_window() : g->window();
+    Fl_Window *w = dock->window();
+    int X = Fl::event_x_root();
+    int Y = Fl::event_y_root();
+    bool over = false;
+    if (gw && gw->shown() && g->visible_r()) {
+      int gx = gw->x_root();
+      int gy = gw->y_root();
+      if (!g->as_window()) { gx += g->x(); gy += g->y(); }
+      over = (X >= gx && Y >= gy && X < gx + g->w() && Y < gy + g->h());
+    }
+    if (over != (w->parent() != NULL)) float_in(over ? g : NULL, w->x_root(), w->y_root());
+    return 1;
   }
   return 0;
 }
