@@ -170,10 +170,7 @@ Fl_Dockable_Group::Docking_Target_Box::~Docking_Target_Box() {
 void Fl_Dockable_Group::check_origin_target(Fl_Widget *target) {
   for (const auto& element : dockables_) {
     Fl_Dockable_Group *dock = (Fl_Dockable_Group*)element;
-    if (dock->origin_target_ == target) {
-      dock->origin_target_ = NULL;
-      return;
-    }
+    if (dock->origin_target_ == target) dock->origin_target_ = NULL;
   }
 }
 
