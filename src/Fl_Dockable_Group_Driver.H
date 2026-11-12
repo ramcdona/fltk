@@ -30,6 +30,8 @@ private:
   virtual int handle_drag_widget_(int event);
 protected:
   Fl_Dockable_Group *dockable_;
+  Fl_Group *undock_parent_; // The group undock() last took the dockable from, or NULL
+  Fl_Widget *undock_box_; // The Docking_Target_Box undock() put in its place, or NULL
   Fl_Double_Window *undock();
   static void dragged_dockable_cb(Fl_Window *win);
   std::vector<Fl_Window*> hidden_subwindows_; // Subwindows hidden while the group changes window
@@ -45,7 +47,9 @@ public:
     int handle(int event) override;
   };
   static Fl_Dockable_Group_Driver *newDockableGroupDriver(Fl_Dockable_Group*);
-  Fl_Dockable_Group_Driver(Fl_Dockable_Group *from) { dockable_ = from; }
+  Fl_Dockable_Group_Driver(Fl_Dockable_Group *from) {
+    dockable_ = from; undock_parent_ = NULL; undock_box_ = NULL;
+  }
   virtual ~Fl_Dockable_Group_Driver() {}
   static Fl_Dockable_Group_Driver *driver(Fl_Dockable_Group *dock) { return dock->driver_; }
   inline void state(enum Fl_Dockable_Group::states s) { dockable_->set_state_(s); }

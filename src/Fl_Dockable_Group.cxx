@@ -319,6 +319,10 @@ int Fl_Dockable_Group::handle_docking_target(bool& processed, Fl_Widget *docking
     }
       break;
     case FL_UNDOCK:
+      // Only the group the dockable left, or the box that replaced it there, takes the event:
+      // a plain Fl_Group gives it to the first of its children that accepts it.
+      if (docking_target != active_dockable_->driver_->undock_parent_ &&
+          docking_target != active_dockable_->driver_->undock_box_) return 0;
       Fl_Dockable_Group::active_dockable_->origin_target_ = docking_target;
       if (undock_f) undock_f(docking_target, Fl_Dockable_Group::active_dockable_);
       Fl_Dockable_Group::active_dockable_->handle(FL_UNDOCK);
@@ -599,12 +603,15 @@ Fl_Double_Window *Fl_Dockable_Group_Driver::undock() {
   // transform the dockable group into a draggable, borderless toplevel window
   Fl_Group *top = dockable_->parent();
   hide_subwindows(dockable_);
+  undock_parent_ = top;
+  undock_box_ = NULL;
   if (top) {
     top->remove(dockable_);
     Fl_Box *tmp = new Fl_Dockable_Group::Docking_Target_Box(
                                                       dockable_->x(), dockable_->y(), dockable_->w(), dockable_->h());
     top->add(tmp);
     top->redraw();
+    undock_box_ = tmp;
   }
   const char *label = "Fl_Dockable_Group";
   Fl_Double_Window *win = dockable_->resizable() ? new resizable_draggable_win(dockable_->w(), dockable_->h(),
