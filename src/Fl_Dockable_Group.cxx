@@ -452,14 +452,12 @@ int Fl_Dockable_Group_Driver::handle_drag_widget_(int event) {
   if (event == FL_PUSH && (Fl::event_state() & FL_BUTTON1) &&
       (dock->state_ == Fl_Dockable_Group::UNDOCK || dock->state_ == Fl_Dockable_Group::DRAG)) {
     if (dock->state_ == Fl_Dockable_Group::UNDOCK) drag_count = 0;
-    Fl_Group *top = dock->parent();
-    Fl_Window *top_win = top->top_window();
     fromx = Fl::event_x_root();
     fromy = Fl::event_y_root();
-    int offset_x = 0, offset_y = 0;
-    if (top->window()) top->window()->top_window_offset(offset_x, offset_y);
-    winx = top_win->x_root() + offset_x + dock->x();
-    winy = top_win->y_root() + offset_y + dock->y();
+    int offset_x, offset_y; // position of the group in its top-level window
+    Fl_Window *top_win = dock->top_window_offset(offset_x, offset_y);
+    winx = top_win->x_root() + offset_x;
+    winy = top_win->y_root() + offset_y;
     return 1;
   } else if (event == FL_DRAG && (Fl::event_state() & FL_BUTTON1) &&
              (dock->state_ == Fl_Dockable_Group::UNDOCK ||
