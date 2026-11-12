@@ -36,13 +36,17 @@ class Fl_Wayland_Dockable_Group_Driver : public Fl_Dockable_Group_Driver {
 private:
 #if HAVE_XDG_TOPLEVEL_DRAG
   struct xdg_toplevel_drag_v1 *drag_;
-  int old_keyboard_screen_scaling_;
+  bool scaling_off_; // true while this dockable floats with keyboard screen scaling turned off
+  static int scaling_off_count_; // number of dockables for which scaling_off_ is true
+  static int old_keyboard_screen_scaling_; // keyboard screen scaling before the first of them floated
+  void restore_keyboard_screen_scaling_();
 #endif
   void after_release_() override;
   void check_event_(int& event) override;
   int handle_drag_widget_(int event) override;
 public:
   Fl_Wayland_Dockable_Group_Driver(Fl_Dockable_Group *from);
+  ~Fl_Wayland_Dockable_Group_Driver();
   // Used only without xdg-toplevel protocol.
   // Parent group of the dragged Fl_Dockable_Group, or NULL if started in undocked state.
   static Fl_Group *origin_group;
@@ -52,6 +56,10 @@ public:
 
 
 Fl_Group *Fl_Wayland_Dockable_Group_Driver::origin_group = NULL;
+#if HAVE_XDG_TOPLEVEL_DRAG
+int Fl_Wayland_Dockable_Group_Driver::scaling_off_count_ = 0;
+int Fl_Wayland_Dockable_Group_Driver::old_keyboard_screen_scaling_ = 1;
+#endif
 
 
 // This class is used when the compositor doesn't support protocol 'XDG toplevel drag'.
@@ -69,9 +77,26 @@ Fl_Wayland_Dockable_Group_Driver::Fl_Wayland_Dockable_Group_Driver(Fl_Dockable_G
   Fl_Dockable_Group_Driver(from) {
 #if HAVE_XDG_TOPLEVEL_DRAG
   drag_ = NULL;
-  old_keyboard_screen_scaling_ = 0;
+  scaling_off_ = false;
 #endif
 }
+
+
+Fl_Wayland_Dockable_Group_Driver::~Fl_Wayland_Dockable_Group_Driver() {
+#if HAVE_XDG_TOPLEVEL_DRAG
+  restore_keyboard_screen_scaling_(); // the dockable is deleted while it floats
+#endif
+}
+
+
+#if HAVE_XDG_TOPLEVEL_DRAG
+// Turns keyboard screen scaling back on, as it was, when the last floating dockable docks or is deleted
+void Fl_Wayland_Dockable_Group_Driver::restore_keyboard_screen_scaling_() {
+  if (!scaling_off_) return;
+  scaling_off_ = false;
+  if (--scaling_off_count_ == 0) Fl::keyboard_screen_scaling(old_keyboard_screen_scaling_);
+}
+#endif
 
 
 Fl_Dockable_Group_Driver *Fl_Dockable_Group_Driver::newDockableGroupDriver(Fl_Dockable_Group *dock) {
@@ -92,6 +117,7 @@ void Fl_Wayland_Dockable_Group_Driver::after_release_() {
     xdg_toplevel_drag_v1_destroy(drag_);
     drag_ = NULL;
   }
+  restore_keyboard_screen_scaling_();
 #endif
   if (scr_driver->seat->data_source) wl_data_source_set_user_data(scr_driver->seat->data_source, NULL);
 }
@@ -183,8 +209,11 @@ int Fl_Wayland_Dockable_Group_Driver::handle_drag_widget_(int event) {
                                 (Fl::event_x() - dock_x) * s, (Fl::event_y() - dock_y) * s);
     //printf("xdg_toplevel_drag_v1_attach to toplevel=%p\n",xid->xdg_toplevel);
     active_dockable(dockable_);
-    old_keyboard_screen_scaling_ = Fl_Screen_Driver::keyboard_screen_scaling;
-    Fl::keyboard_screen_scaling(0); // turn off dynamic GUI scaling
+    if (!scaling_off_) {
+      if (scaling_off_count_++ == 0) old_keyboard_screen_scaling_ = Fl_Screen_Driver::keyboard_screen_scaling;
+      scaling_off_ = true;
+      Fl::keyboard_screen_scaling(0); // turn off dynamic GUI scaling while the dockable floats
+    }
     dock_parent->handle(FL_UNDOCK);
   } else if (event == FL_PUSH && dockable_->state() == Fl_Dockable_Group::DRAG) {
     // catch again a draggable window
