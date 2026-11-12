@@ -14,6 +14,9 @@
 //     https://www.fltk.org/bugs.php
 //
 
+#ifndef FL_DOCKABLE_GROUP_DRIVER_H
+#define FL_DOCKABLE_GROUP_DRIVER_H
+
 #ifndef FL_DOXYGEN
 
 #include <FL/Fl_Dockable_Group.H>
@@ -52,3 +55,5 @@ public:
 };
 
 #endif // ! FL_DOXYGEN
+
+#endif // FL_DOCKABLE_GROUP_DRIVER_H
