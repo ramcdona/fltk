@@ -23,6 +23,9 @@
 #include <FL/Fl_Text_Editor.H>
 #include "Fl_Screen_Driver.H"
 #include <FL/fl_ask.H>
+#if defined(FLTK_USE_WAYLAND)
+#  include <FL/platform.H> // for fl_wl_display()
+#endif
 
 /* Keyboard Control Matrix
 
@@ -779,7 +782,11 @@ int Fl_Text_Editor::handle(int event) {
       // Handle drag'n'drop attempt by the user. This is a simplified
       // implementation which allows dnd operations onto the scroll bars.
     case FL_DND_ENTER: // save the current cursor position
-      if ( !Fl::clipboard_contains(Fl::clipboard_plain_text) ) return 0;
+#if defined(FLTK_USE_WAYLAND)
+      // Under Wayland, the clipboard is what is dragged: refuse a drag
+      // that holds no text, such as that of an Fl_Dockable_Group
+      if (fl_wl_display() && !Fl::clipboard_contains(Fl::clipboard_plain_text)) return 0;
+#endif
       if (Fl::visible_focus() && handle(FL_FOCUS))
         Fl::focus(this);
       show_cursor(mCursorOn);

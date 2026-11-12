@@ -699,7 +699,11 @@ int Fl_Input::handle(int event) {
       return 1;
 
     case FL_DND_ENTER:
-      if ( !Fl::clipboard_contains(Fl::clipboard_plain_text) ) return 0;
+#if defined(FLTK_USE_WAYLAND)
+      // Under Wayland, the clipboard is what is dragged: refuse a drag
+      // that holds no text, such as that of an Fl_Dockable_Group
+      if (fl_wl_display() && !Fl::clipboard_contains(Fl::clipboard_plain_text)) return 0;
+#endif
       Fl::belowmouse(this); // send the leave events first
       if (dnd_save_focus != this) {
         dnd_save_position = insert_position();
