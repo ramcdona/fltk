@@ -47,6 +47,7 @@ private:
 public:
   Fl_Wayland_Dockable_Group_Driver(Fl_Dockable_Group *from);
   ~Fl_Wayland_Dockable_Group_Driver();
+  void drag_cancelled();
   // Used only without xdg-toplevel protocol.
   // Parent group of the dragged Fl_Dockable_Group, or NULL if started in undocked state.
   static Fl_Group *origin_group;
@@ -123,9 +124,27 @@ void Fl_Wayland_Dockable_Group_Driver::after_release_() {
 }
 
 
+// Ends the drag object of a drag that did not dock the dockable.  With the xdg-toplevel-drag protocol,
+// the dockable's window keeps floating in the DRAG state and is grabbed again from there.
+void Fl_Wayland_Dockable_Group_Driver::drag_cancelled() {
+#if HAVE_XDG_TOPLEVEL_DRAG
+  if (drag_) {
+    xdg_toplevel_drag_v1_destroy(drag_);
+    drag_ = NULL;
+  }
+#endif
+}
+
+
+// data is the dragged dockable without the xdg-toplevel-drag protocol, and NULL with it
 static void xdg_toplevel_drag_data_source_handle_cancelled(void *data, struct wl_data_source *source) {
   Fl_Dockable_Group *dock = (Fl_Dockable_Group*)data;
-  if (dock) {
+  Fl_Dockable_Group *active = Fl_Dockable_Group::active_dockable();
+  Fl_Wayland_Screen_Driver *scr_driver = (Fl_Wayland_Screen_Driver*)Fl::screen_driver();
+  // source is that of the active dockable's drag only if no other drag or copy replaced it since
+  if (!dock && active && scr_driver->xdg_toplevel_drag && source == scr_driver->seat->data_source) {
+    ((Fl_Wayland_Dockable_Group_Driver*)Fl_Dockable_Group_Driver::driver(active))->drag_cancelled();
+  } else if (dock) {
     enum Fl_Dockable_Group::states s = Fl_Dockable_Group::UNDOCK;
     if ( ((Fl_Wayland_Screen_Driver*)Fl::screen_driver())->xdg_toplevel_drag == NULL &&
         !Fl_Wayland_Dockable_Group_Driver::origin_group) s = Fl_Dockable_Group::DRAG;
