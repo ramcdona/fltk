@@ -215,8 +215,9 @@ void Fl_Dockable_Group::color_targets_following_dock_() {
     win = Fl::next_window(win);
   }
   if (!found && active_dockable_) {
-    set_state_(Fl_Dockable_Group::DRAG);
+    // the target sends FL_DOCK_LEAVE to the dockable if it was about to dock there
     if (active_target_) active_target_->handle(FL_DOCK_LEAVE);
+    set_state_(Fl_Dockable_Group::DRAG);
   }
 }
 
