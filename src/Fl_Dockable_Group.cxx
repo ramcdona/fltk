@@ -633,6 +633,7 @@ void Fl_Dockable_Group::set_state_(enum Fl_Dockable_Group::states s) {
   else if (state_ == Fl_Dockable_Group::DOCK) {
     c = dock_color_; t = dock_label_;
   }
+  if (!drag_widget()) return;
   drag_widget()->color(c);
   drag_widget()->labelcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
   drag_widget()->label(t);
