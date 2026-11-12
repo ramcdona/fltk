@@ -269,7 +269,6 @@ int main(int argc, char **argv) {
   tabs->client_area(X, Y, W, H);
   new Fl_Box(FL_FLAT_BOX, X, Y, W, H, "Tab 1");
   tabs->end();
-  tabs->value(dock);
   destination->end();
   destination->resizable(destination);
   destination->show();
