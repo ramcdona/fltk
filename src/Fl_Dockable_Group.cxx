@@ -166,11 +166,18 @@ Fl_Dockable_Group::Docking_Target_Box::~Docking_Target_Box() {
  \code
    Fl_Dockable_Group::check_origin_target(this);
  \endcode
+ It makes every Fl_Dockable_Group forget \p target: no dockable is docked back at it when its window
+ is closed, and a dockable dragged above it, about to dock there, goes back to the
+ Fl_Dockable_Group::DRAG state.
 */
 void Fl_Dockable_Group::check_origin_target(Fl_Widget *target) {
   for (const auto& element : dockables_) {
     Fl_Dockable_Group *dock = (Fl_Dockable_Group*)element;
     if (dock->origin_target_ == target) dock->origin_target_ = NULL;
+    if (dock->active_target_ == target) {
+      dock->active_target_ = NULL;
+      if (dock->state_ == DOCK) dock->set_state_(DRAG);
+    }
   }
 }
 
