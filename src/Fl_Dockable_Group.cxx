@@ -62,6 +62,7 @@ Fl_Dockable_Group::Fl_Dockable_Group(int x, int y, int w, int h, const char *t) 
 Fl_Dockable_Group::~Fl_Dockable_Group() {
   if (active_dockable_ == this) active_dockable_ = NULL;
   dockables_.erase(this);
+  delete driver_;
 }
 
 

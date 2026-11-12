@@ -43,6 +43,7 @@ public:
   };
   static Fl_Dockable_Group_Driver *newDockableGroupDriver(Fl_Dockable_Group*);
   Fl_Dockable_Group_Driver(Fl_Dockable_Group *from) { dockable_ = from; }
+  virtual ~Fl_Dockable_Group_Driver() {}
   static Fl_Dockable_Group_Driver *driver(Fl_Dockable_Group *dock) { return dock->driver_; }
   inline void state(enum Fl_Dockable_Group::states s) { dockable_->set_state_(s); }
   virtual void before_dock();
