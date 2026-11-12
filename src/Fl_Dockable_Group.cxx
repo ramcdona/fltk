@@ -182,7 +182,7 @@ void Fl_Dockable_Group::check_origin_target(Fl_Widget *target) {
 bool Fl_Dockable_Group::is_dockable_inside(Fl_Widget *widget) {
   int X = Fl::event_x_root();
   int Y = Fl::event_y_root();
-  int box_x, box_y, retval = 1;
+  int box_x, box_y;
   Fl_Window *top = widget->top_window_offset(box_x, box_y);
   box_x += top->x();
   box_y += top->y();
@@ -624,8 +624,8 @@ Fl_Double_Window *Fl_Dockable_Group_Driver::undock() {
 
 void Fl_Dockable_Group::set_state_(enum Fl_Dockable_Group::states s) {
   state_ = s;
-  Fl_Color c;
-  const char *t;
+  Fl_Color c = undock_color_;
+  const char *t = undock_label_;
   if (state_ == Fl_Dockable_Group::UNDOCK) {
     c = undock_color_; t = undock_label_;
   } else if (state_ == Fl_Dockable_Group::DRAG) {
