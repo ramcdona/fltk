@@ -276,6 +276,9 @@ int Fl_Dockable_Group::handle_docking_target(bool& processed, Fl_Widget *docking
       if (acceptable_f && !acceptable_f(docking_target, Fl_Dockable_Group::active_dockable_)) return 0;
       if (inside_f(docking_target)) { // true if mouse is inside the target's docking area
         if (active_dockable_->active_target_ != docking_target) {
+          // the dockable leaves the target it was about to dock at, then enters this one
+          if (active_dockable_->active_target_ && active_dockable_->state_ == DOCK)
+            active_dockable_->active_target_->handle(FL_DOCK_LEAVE);
           active_dockable_->active_target_ = docking_target;
         }
         if (active_dockable_->state_ != DOCK) {
