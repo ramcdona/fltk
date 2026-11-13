@@ -209,8 +209,10 @@ void Fl_Window_Driver::wait_for_expose() {
 }
 
 int Fl_Window_Driver::screen_num() {
-  if (pWindow->parent()) {
-    screen_num_ = Fl_Window_Driver::driver(pWindow->top_window())->screen_num();
+  // A subwindow in a group that is in no window has no top window
+  Fl_Window *top = pWindow->top_window();
+  if (pWindow->parent() && top) {
+    screen_num_ = Fl_Window_Driver::driver(top)->screen_num();
   }
   return screen_num_ >= 0 ? screen_num_ : 0;
 }
