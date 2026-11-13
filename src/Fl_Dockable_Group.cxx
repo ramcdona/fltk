@@ -454,6 +454,12 @@ int Fl_Dockable_Group_Driver::handle_drag_widget_(int event) {
     if (dock->state_ == Fl_Dockable_Group::UNDOCK) drag_count = 0;
     fromx = Fl::event_x_root();
     fromy = Fl::event_y_root();
+    if (dock->state_ == Fl_Dockable_Group::DRAG && dock->window()) {
+      // a floating group moves its window
+      winx = dock->window()->x_root();
+      winy = dock->window()->y_root();
+      return 1;
+    }
     int offset_x, offset_y; // position of the group in its top-level window
     Fl_Window *top_win = dock->top_window_offset(offset_x, offset_y);
     winx = top_win->x_root() + offset_x;
